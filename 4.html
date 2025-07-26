@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- ... 保持原有head内容 ... -->
+</head>
+<body>
+  <div class="redirect-box">
+    <div class="spinner"></div>
+    <div class="message">正在跳转，请稍候...</div>
+    <div class="progress">
+      <div class="progress-bar" id="progress"></div>
+    </div>
+  </div>
+
+  <script>
+    const userLinks = {
+      r1: {
+        mobile: "https://work.weixin.qq.com/ca/cawcdec6419767c05d", // 替换真实URL
+        pc: "https://store.weixin.qq.com/shop/a/j3Yl0Npt4ISycfB"
+      }
+    };
+
+    function isMobile() {
+      const ua = navigator.userAgent.toLowerCase();
+      // 平板设备视为PC
+      if(/ipad|tablet|(android(?!.*mobile))|kindle/i.test(ua)) return false;
+      return /iphone|android|mobile/i.test(ua);
+    }
+
+    function getNameParam() {
+      return new URLSearchParams(window.location.search).get('name');
+    }
+
+    // 进度条动画
+    let width = 0;
+    const progressBar = document.getElementById('progress');
+    const progressInterval = setInterval(() => {
+      width += 10;
+      progressBar.style.width = `${width}%`;
+      if(width >= 100) clearInterval(progressInterval);
+    }, 50);
+
+    // 创建取消按钮
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = '取消跳转';
+    cancelBtn.style = 'margin-top:15px;padding:8px 20px;background:#f0f0f0;border:none;border-radius:4px;cursor:pointer;';
+    cancelBtn.onclick = () => {
+      clearTimeout(redirectTimer);
+      document.querySelector('.message').textContent = '跳转已取消';
+      clearInterval(progressInterval);
+      progressBar.style.width = '100%';
+      progressBar.style.background = '#ccc';
+      cancelBtn.remove();
+    };
+    document.querySelector('.redirect-box').appendChild(cancelBtn);
+
+    // 跳转逻辑
+    const redirectTimer = setTimeout(() => {
+      const name = getNameParam();
+      const user = userLinks[name];
+      
+      let finalUrl;
+      if (user) {
+        finalUrl = isMobile() ? user.mobile : user.pc;
+      } else {
+        finalUrl = isMobile() 
+          ? "https://work.weixin.qq.com/ca/cawcdec6419767c05d"  // 设置默认移动链接
+          : "https://store.weixin.qq.com/shop/a/LluSZD4skgAvmzA";
+      }
+
+      window.location.href = finalUrl;
+      
+      // 跳转失败兜底
+      setTimeout(() => {
+        if(!document.hidden) {
+          document.querySelector('.message').innerHTML = 
+            `跳转失败，<a href="${finalUrl}">点击此处继续</a>`;
+          progressBar.style.background = '#ff4d4f';
+        }
+      }, 3000);
+    }, 500);
+  </script>
+</body>
+</html>
